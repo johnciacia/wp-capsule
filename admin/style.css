@@ -1,0 +1,20 @@
+.capsule label {
+	float: left;
+	width: 260px;
+}
+
+.capsule select {
+	width: 300px;
+}
+
+.capsule button {
+	width: 22px;
+	height: 22px;
+	margin-left: 5px;
+	text-align: center;
+}
+
+.capsule .margin_virtical_10 {
+	margin: 10px 0;
+	padding-left: 5px;
+}
