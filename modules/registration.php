@@ -1,6 +1,67 @@
 <?php
 
 /**
+ * Add shortcode to display the users profile page.
+ */
+add_shortcode( 'cap-profile', function( $atts ) {
+	$atts = shortcode_atts( array(
+		'form' => null,
+	), $atts );
+
+	if ( is_null( $atts['form'] ) ) {
+		return '<p>' . _( 'Oops! We could not locate your form.', 'cap' ) . '</p>';
+	}
+
+	$user_id = get_current_user_id();
+	if ( ! $user_id ) {
+		return '<p>' . _e( 'You must be logged in to view your opportunities.', 'cap' ) . '</p>';
+	}
+
+	// Get the party ID for the current user.
+	$party_id = cap_get_partyid();
+	if ( ! $party_id ) {
+		return '<p>' . _e( 'Invalid Party ID', 'cap' ) . '</p>';
+	}
+
+	$party = Capsule_CRM_API::get_party( $party_id );
+	$custom_fields = Capsule_CRM_API::get_custom_fields_for( $party_id );
+	$meta = Capsule_CRM_Form::get_meta( $atts['form'] );
+
+	add_filter( 'gform_pre_render', function( $form ) use ( $meta, $party, $custom_fields, $form_id ) {
+		$filters = array();
+		foreach ( $form['fields'] as &$field ) {
+			$field['allowsPrepopulate'] = true;
+			if ( is_null( $field['inputs'] ) ) {
+				$field['inputName'] = cap_get_field_name( $field['id'] );
+				$filters[] = array(
+					'id' => $field['id'],
+					'name' => $field['inputName'],
+				);
+			} else {
+				foreach( $field['inputs'] as &$input ) {
+					$input['name'] = cap_get_field_name( $input['id'] );
+					$filters[] = array(
+						'id' => $input['id'],
+						'name' => $input['name'],
+					);
+				}
+			}
+
+			foreach ( $filters as $filter ) {
+				$id = $filter['id'];
+				add_filter( 'gform_field_value_' . $filter['name'], function( $value ) use ( $id, $meta, $party, $custom_fields, $form_id ) {
+					return cap_get_field_value( $id, $meta, $party, $custom_fields, $form_id );
+				} );
+			}
+		}
+
+		return $form;
+	} );
+
+	echo do_shortcode( '[gravityform id="' . $atts['form'] . '" name="Profile" title="false" description="false"]' );
+} );
+
+/**
  * Add a profile field for the party ID.
  */
 add_filter( 'cap_user_profile_fields', function( $fields, $user ) {
@@ -17,35 +78,6 @@ add_filter( 'cap_user_profile_fields', function( $fields, $user ) {
 	);
 
 	return $fields;
-}, 10, 2 );
-
-add_action( 'cap_party_submission', function( $entry, $form ) {
-	$party_id = cap_get_partyid();
-	$party = Capsule_CRM_API::get_party( $party_id );
-
-	$template = Capsule_CRM_Data::party();
-	$data = Capsule_CRM_Data::get_form_data( $template, $entry, $form );
-
-	foreach ( $data as $key => $value ) {
-		if ( $key == 'contacts' ) {
-			continue;
-		}
-
-		if ( isset( $party->$key ) && ! empty( $value ) ) {
-			$party->$key = $value;
-		}
-	}
-
-	foreach ( $data['contacts'] as $group_name => $group ) {
-		foreach ( $group as $field_name => $field ) {
-			if ( isset( $party->contacts->$group_name->$field_name ) && ! empty( $field ) ) {
-				$party->contacts->$group_name->$field_name = $field;
-			}
-		}
-	}
-
-	$response = Capsule_CRM_API::update_party( $party_id, array( 'person' => $party )  );
-	update_option( 'cap_response', $response );
 }, 10, 2 );
 
 /**
@@ -168,65 +200,7 @@ add_filter( 'gform_validation', function( $validation_result ) {
 	return $validation_result;
 } );
 
-add_shortcode( 'cap-profile', function( $atts ) {
-	$atts = shortcode_atts( array(
-		'form' => null,
-	), $atts );
 
-	if ( is_null( $atts['form'] ) ) {
-		return '<p>' . _( 'Oops! We could not locate your form.', 'cap' ) . '</p>';
-	}
-
-	$user_id = get_current_user_id();
-	if ( ! $user_id ) {
-		return '<p>' . _e( 'You must be logged in to view your opportunities.', 'cap' ) . '</p>';
-	}
-
-	// Get the party ID for the current user.
-	$party_id = cap_get_partyid();
-	if ( ! $party_id ) {
-		return '<p>' . _e( 'Invalid Party ID', 'cap' ) . '</p>';
-	}
-
-	$party = Capsule_CRM_API::get_party( $party_id );
-	$custom_fields = Capsule_CRM_API::get_custom_fields_for( $party_id );
-	$meta = Capsule_CRM_Form::get_meta( $atts['form'] );
-
-	// @todo: refactor this...
-	add_filter( 'gform_pre_render', function( $form ) use ( $meta, $party, $custom_fields, $form_id ) {
-		$filters = array();
-		foreach ( $form['fields'] as &$field ) {
-			$field['allowsPrepopulate'] = true;
-			if ( is_null( $field['inputs'] ) ) {
-				$field['inputName'] = cap_get_field_name( $field['id'] );
-				$filters[] = array(
-					'id' => $field['id'],
-					'name' => $field['inputName'],
-				);
-			} else {
-				foreach( $field['inputs'] as &$input ) {
-					$input['name'] = cap_get_field_name( $input['id'] );
-					$filters[] = array(
-						'id' => $input['id'],
-						'name' => $input['name'],
-					);
-				}
-			}
-
-			foreach ( $filters as $filter ) {
-				$id = $filter['id'];
-				add_filter( 'gform_field_value_' . $filter['name'], function( $value ) use ( $id, $meta, $party, $custom_fields, $form_id ) {
-					return cap_get_field_value( $id, $meta, $party, $custom_fields, $form_id );
-				} );
-			}
-		}
-
-		return $form;
-	} );
-
-
-	echo do_shortcode( '[gravityform id="' . $atts['form'] . '" name="Profile" title="false" description="false"]' );
-} );
 
 function cap_get_field_id( $name ) {
 	return str_replace( '-', '.', substr( $name, 4 ) );
@@ -258,12 +232,16 @@ function cap_get_field_value( $id, $meta, $party, $custom_fields, $form_id ) {
 				if ( 'default' == $group_name ) {
 					return $party->$field_name;
 				} else {
-					return $party->contacts->$group_name->$field_name;
+					if ( is_array( $party->contacts->$group_name ) ) {
+						$_group = $party->contacts->$group_name;
+						return $_group[0]->$field_name;
+					} else {
+						return $party->contacts->$group_name->$field_name;
+					}
 				}
 			}
 		}
 	}
 
 	return '';
-
 }

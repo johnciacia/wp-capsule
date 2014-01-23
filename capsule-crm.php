@@ -30,6 +30,7 @@ require_once( __DIR__ . '/data.php' );
 require_once( __DIR__ . '/template-tags.php' );
 require_once( __DIR__ . '/modules/registration.php' );
 require_once( __DIR__ . '/modules/opportunity.php' );
+require_once( __DIR__ . '/modules/party.php' );
 require_once( __DIR__ . '/settings.php' );
 
 /**
