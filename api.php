@@ -49,6 +49,7 @@ class Capsule_CRM_API {
 				'headers' => array(
 					'Authorization' => 'Basic ' . base64_encode( $this->key . ':x' ),
 					'Content-type' => 'application/json',
+					'Accept' => 'application/json',
 				),
 				'body' => json_encode( $data ),
 			) );
@@ -60,7 +61,6 @@ class Capsule_CRM_API {
 	}
 
 	public function put( $url, $data ) {
-		error_log( $url );
 		$response = wp_remote_request( $url, array(
 			'headers' => array(
 				'Authorization' => 'Basic ' . base64_encode( $this->key . ':x' ),
@@ -82,5 +82,116 @@ class Capsule_CRM_API {
 	public function set_key( $key ) {
 		$this->key = $key;
 		return $this;
+	}
+
+	/**
+	 *
+	 */
+	public static function add_party( $data ) {
+		return self::instance()->post( 'api/person', $data );
+	}
+
+	/**
+	 *
+	 */
+	public static function update_party( $party_id, $data ) {
+		return self::instance()->put( trailingslashit( self::instance()->url ) . 'api/person/' . $party_id, $data );
+	}
+
+	/**
+	 *
+	 */
+	public static function get_party( $party_id ) {
+		$response = self::instance()->get( 'api/party/' . (int)$party_id );
+		$data = json_decode( $response['body'] );
+
+		if ( isset( $data->person ) ) {
+			return $data->person;
+		}
+
+		return array();
+	}
+
+	/**
+	 * Get the custom field definitions for the specified type.
+	 * @param $type
+	 * @return bool|array
+	 */
+	public static function get_custom_fields( $type = 'party' ) {
+		$response = self::instance()->get( 'api/' . $type . '/customfield/definitions' );
+		$data = json_decode( $response['body'] );
+
+		if ( isset( $data->customFieldDefinitions->{'@size'} ) ) {
+			if ( 0 == $data->customFieldDefinitions->{'@size'} ) {
+				return array();
+			}
+
+			if ( 1 == $data->customFieldDefinitions->{'@size'} ) {
+				return array( $data->customFieldDefinitions->customFieldDefinition );
+			}
+
+			return $data->customFieldDefinitions->customFieldDefinition;
+		}
+
+		return false;
+	}
+
+	public static function get_custom_fields_for( $id, $type = 'party' ) {
+		$response = self::instance()->get( '/api/' . $type . '/' . $id . '/customfields' );
+		$data = json_decode( $response['body'] );
+
+
+		if ( isset( $data->customFields->{'@size'} ) ) {
+			if ( 0 == $data->customFields->{'@size'} ) {
+				return array();
+			}
+
+			if ( 1 == $data->customFields->{'@size'} ) {
+				return array( $data->customFields->customField );
+			}
+
+			return $data->customFields->customField;
+		}
+
+		return false;
+	}
+
+	public static function get_opportunities( $party_id ) {
+		$response = self::instance()->get( 'api/party/' . $party_id . '/opportunity' );
+		$data = json_decode( $response['body'] );
+
+		if ( isset( $data->opportunities->{'@size'} ) ) {
+			if ( 0 == $data->opportunities->{'@size'} ) {
+				return array();
+			}
+
+			if ( 1 == $data->opportunities->{'@size'} ) {
+				return array( $data->opportunities->opportunity );
+			}
+
+			return $data->opportunities->opportunity;
+		}
+
+		return false;
+	}
+
+	public static function get_opportunity_tags( $opportunity_id ) {
+		$response = self::instance()->get( 'api/opportunity/' . $opportunity_id . '/tag' );
+		$data = json_decode( $response['body'] );
+
+		if ( isset( $data->tags->{'@size'} ) ) {
+
+			if ( 0 == $data->tags->{'@size'} ) {
+				return array();
+			}
+
+			if ( 1 == $data->tags->{'@size'} ) {
+				return array( $data->tags->tag );
+			}
+
+			return $data->tags->tag;
+		}
+
+		return false;
 	}
 }

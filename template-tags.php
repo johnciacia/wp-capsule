@@ -29,3 +29,43 @@ function cap_get_partyid( $user_id = null ) {
 
 	return get_user_meta( $user_id, 'cap-partyid', true );
 }
+
+function cap_get_additional_forms( $tags ) {
+	$terms = array();
+	foreach ( $tags as $tag ) {
+		$term = get_term_by( 'name', $tag->name, 'post_tag' );
+		$terms[] = $term->slug;
+	}
+
+	return new WP_Query( array(
+		'post_type' => 'capsule_form',
+		'post_status' => 'publish',
+		'tax_query' => array(
+			array(
+				'taxonomy' => 'post_tag',
+				'field' => 'slug',
+				'terms' => $terms,
+			),
+		),
+	) );
+}
+
+function cap_get_additional_posts( $tags ) {
+	$terms = array();
+	foreach ( $tags as $tag ) {
+		$term = get_term_by( 'name', $tag->name, 'post_tag' );
+		$terms[] = $term->slug;
+	}
+
+	return new WP_Query( array(
+		'post_type' => array( 'post', 'page' ),
+		'post_status' => 'publish',
+		'tax_query' => array(
+			array(
+				'taxonomy' => 'post_tag',
+				'field' => 'slug',
+				'terms' => $terms,
+			),
+		),
+	) );
+}

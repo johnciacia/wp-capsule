@@ -1,17 +1,17 @@
-<?php if ( $fields = cap_get_custom_fields() ) : ?>
-<?php $data = get_post_meta( get_the_ID(), 'cap_form_data' ); $data = $data[0]; ?>
+<?php if ( $fields ) : ?>
 <div id="capsule-custom-fields" class="capsule">
-	<?php for ( $i = 0; $i < count( $data['cap-custom-field']['a'] ) || $i < 1; $i++ ) : ?>
+	<?php for ( $i = 0; $i < count( $data['custom']['a'] ) || $i < 1; $i++ ) : ?>
 	<div class="custom-fields margin_virtical_10">
-		<select style="width:220px;margin-right:35px;" name="cap-custom-field[a][]">
+		<select style="width:220px;margin-right:35px;" name="cap[custom][a][]">
 		<?php foreach ( $fields as $field ) : ?>
-			<option value="<?php echo esc_attr( $field->id ); ?>" <?php selected( $data['cap-custom-field']['a'][ $i ], $field->id, true ); ?>><?php echo esc_html( $field->label ); ?><?php echo isset( $field->tag ) ? ' (' . esc_html( $field->tag ) . ')' : ''; ?></option>
+			<option value="<?php echo esc_attr( $field->label ); ?>" <?php selected( $data['custom']['a'][ $i ], $field->label, true ); ?>><?php echo esc_html( $field->label ); ?><?php echo isset( $field->tag ) ? ' (' . esc_html( $field->tag ) . ')' : ''; ?></option>
 		<?php endforeach; ?>
 		</select>
 
-		<select name="cap-custom-field[b][]">
-		<?php foreach ( _cap_get_rgform_fields() as $key => $value ) : ?>
-			<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $data['cap-custom-field']['b'][ $i ], $key, true ); ?>><?php echo esc_html( $value ); ?></option>
+		<select class="form-fields" name="cap[custom][b][]">
+			<option value="0"></option>
+		<?php foreach ( $gf_form_fields as $key => $value ) : ?>
+			<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $data['custom']['b'][ $i ], $key, true ); ?>><?php echo esc_html( $value ); ?></option>
 		<?php endforeach; ?>
 		</select>
 		<button class="add-field">+</button><button class="remove-field">-</button>

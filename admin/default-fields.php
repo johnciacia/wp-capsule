@@ -1,5 +1,4 @@
 <div class="wrap capsule">
-	<?php $data = cap_get_form_values(); ?>
 	<div>
 		<h3>Form Settings</h3>
 		<div class="margin_virtical_10">
@@ -18,11 +17,10 @@
 		</div>
 	</div>
 
-	<?php $inputs = _cap_get_rgform_fields(); ?>
-	<?php foreach ( cap_get_form_fields() as $group ) : ?>
-	<div class="form-options">
+	<?php foreach ( $groups as $group_name => $group ) : ?>
+	<div>
 		<h3><?php echo esc_html( $group['label'] ); ?></h3>
-		<?php foreach ( $group['fields'] as $key => $field ) : ?>
+		<?php foreach ( $group['fields'] as $field_name => $field ) : ?>
 		<div class="margin_virtical_10">
 			<label class="left_header">
 				<?php echo esc_html( $field['label'] ); ?>
@@ -30,10 +28,11 @@
 					<span class="description"> (required)</span>
 				<?php endif; ?>
 			</label>
-			<?php $name = strtolower( str_replace( ' ', '_', $group['label'] ) . '_' . $key ); ?>
-			<select name="<?php echo esc_attr( $name ); ?>">
-			<?php foreach ( $inputs as $key => $value ) : ?>
-				<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $key, $data[ $name ], true ); ?>><?php echo esc_html( $value ); ?></option>
+
+			<select class="form-fields" name="cap[<?php echo esc_attr( $group_name ); ?>][<?php echo esc_attr( $field_name ); ?>]">
+				<option value="0"></option>
+			<?php foreach ( $gf_form_fields as $gf_field_value => $gf_field_label ) : ?>
+				<option value="<?php echo esc_attr( $gf_field_value ); ?>" <?php selected( $gf_field_value, $data[ $group_name ][ $field_name ], true ); ?>><?php echo esc_html( $gf_field_label ); ?></option>
 			<?php endforeach; ?>
 			</select>
 		</div>
@@ -41,6 +40,7 @@
 	</div>
 	<?php endforeach; ?>
 
+	<input type="hidden" name="cap_form_type" value="<?php echo esc_attr( $type ); ?>" />
 	<?php echo wp_nonce_field( 'cap-user-registration', 'cap-user-registration' ); ?>
 </div>
 
@@ -55,14 +55,14 @@ jQuery( document ).ready( function($) {
 				_wpnonce: '<?php echo wp_create_nonce( 'cap_get_gravity_form' ); ?>'
 			},
 			function( data ) {
-				var select = $( '<select></select>' );
+				var select = $( '<select class="form-fields"></select>' );
 				$( '<option />', { value: 0, text: '' }).appendTo( select );
 
 				for ( var property in data.fields ) {
 					$( '<option />', { value: property, text: data.fields[property] }).appendTo( select );
 				}
 
-				$( '.form-options select' ).each( function() {
+				$( 'select.form-fields' ).each( function() {
 					select.attr( 'name', this.name );
 					$( this ).replaceWith( select[0].outerHTML );
 				} );

@@ -1,0 +1,6 @@
+- Display the "Capsule CRM" menu, under the Gravity Forms menu.
+- Tweak the "Publish" metabox to be more appropriate.
+- On the edit.php page, remove the filters
+- On the edit.php page, remove the search box.
+- On the edit.php page, display the form name.
+- Display custom fields on the profile page
